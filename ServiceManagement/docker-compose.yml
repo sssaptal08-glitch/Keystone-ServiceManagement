@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0.36
+    container_name: keystone-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: keystone
+      MYSQL_USER: keystone_user
+      MYSQL_PASSWORD: keystone_pass
+      MYSQL_ROOT_PASSWORD: root_pass_change_me
+    ports:
+      - "3306:3306"
+    volumes:
+      - keystone_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_pass_change_me"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  keystone_mysql_data:
