@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { extractErrorMessage } from '../api/client';
-import { Wrench } from 'lucide-react';
+import { Wrench, ShieldCheck, Zap, LayoutDashboard, BellRing } from 'lucide-react';
 
 export default function Login() {
   const { login } = useAuth();
@@ -28,38 +28,70 @@ export default function Login() {
 
   return (
     <div className="auth-screen">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <div className="auth-brand">
-          <Wrench size={20} color="#d97706" />
-          <h1>KEYSTONE</h1>
-        </div>
-        <p className="subtitle">Field Service Management Platform</p>
+      <div className="auth-layout">
+        <section className="auth-hero">
+          <div className="auth-badge">
+            <Wrench size={16} />
+            Keystone Service Cloud
+          </div>
+          <h1>Run every dispatch workflow from one premium control room.</h1>
+          <p>
+            Monitor live jobs, manage the SLA pipeline, coordinate technicians, and keep customers informed with a cleaner, faster field service experience.
+          </p>
 
-        {error && <div className="alert alert-error">{error}</div>}
+          <div className="auth-feature-grid">
+            <div className="auth-feature-card">
+              <ShieldCheck size={18} />
+              <span>Role-aware access</span>
+            </div>
+            <div className="auth-feature-card">
+              <Zap size={18} />
+              <span>Live service updates</span>
+            </div>
+            <div className="auth-feature-card">
+              <LayoutDashboard size={18} />
+              <span>Executive dashboard</span>
+            </div>
+            <div className="auth-feature-card">
+              <BellRing size={18} />
+              <span>Instant notifications</span>
+            </div>
+          </div>
+        </section>
 
-        <label>
-          Email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </label>
-        <label>
-          Password
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </label>
+        <form className="auth-card" onSubmit={handleSubmit}>
+          <div className="auth-brand">
+            <Wrench size={20} className="brand-mark" />
+            <h1>KEYSTONE</h1>
+          </div>
+          <p className="subtitle">Field Service Management Platform</p>
 
-        <button className="btn btn-primary" type="submit" disabled={submitting} style={{ justifyContent: 'center' }}>
-          {submitting ? 'Signing in...' : 'Sign in'}
-        </button>
+          {error && <div className="alert alert-error">{error}</div>}
 
-        <div className="demo-hint">
-          <strong>Demo accounts</strong> (password: <code>Password123!</code>)
-          <ul>
-            <li>manager@keystone.dev — Manager</li>
-            <li>dispatcher@keystone.dev — Dispatcher</li>
-            <li>tech1@keystone.dev — Technician</li>
-            <li>customer@keystone.dev — Customer</li>
-          </ul>
-        </div>
-      </form>
+          <label>
+            Email
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </label>
+          <label>
+            Password
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          </label>
+
+          <button className="btn btn-primary" type="submit" disabled={submitting} style={{ justifyContent: 'center' }}>
+            {submitting ? 'Signing in...' : 'Sign in'}
+          </button>
+
+          <div className="demo-hint">
+            <strong>Demo accounts</strong> (password: <code>Password123!</code>)
+            <ul>
+              <li>manager@keystone.dev — Manager</li>
+              <li>dispatcher@keystone.dev — Dispatcher</li>
+              <li>tech1@keystone.dev — Technician</li>
+              <li>customer@keystone.dev — Customer</li>
+            </ul>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
