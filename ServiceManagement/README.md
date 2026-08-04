@@ -37,8 +37,8 @@ This spins up MySQL, the backend, and the frontend together:
 docker compose -f docker-compose.prod.yml up --build -d
 ```
 
-- Frontend: http://localhost:8081
-- Backend API: http://localhost:8080 (Swagger UI at `/swagger-ui.html`)
+- Frontend: https://keystone-service-management.vercel.app/login
+- Backend API: [http://localhost:8080](https://keystone-servicemanagement-production.up.railway.app) (Swagger UI at `/swagger-ui.html`)
 - MySQL: localhost:3306 (`keystone` / `keystone_user` / `keystone_pass`)
 
 Flyway creates the schema and loads demo seed data automatically on first backend boot. Give
