@@ -7,7 +7,7 @@ import { Wrench, ShieldCheck, Zap, LayoutDashboard, BellRing } from 'lucide-reac
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('manager@keystone.dev');
+  const [email, setEmail] = useState('manager@keystone.example');
   const [password, setPassword] = useState('Password123!');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -84,10 +84,10 @@ export default function Login() {
           <div className="demo-hint">
             <strong>Demo accounts</strong> (password: <code>Password123!</code>)
             <ul>
-              <li>manager@keystone.dev — Manager</li>
-              <li>dispatcher@keystone.dev — Dispatcher</li>
-              <li>tech1@keystone.dev — Technician</li>
-              <li>customer@keystone.dev — Customer</li>
+              <li>manager@keystone.example — Manager</li>
+              <li>dispatcher@keystone.example — Dispatcher</li>
+              <li>tech1@keystone.example — Technician</li>
+              <li>customer@keystone.example — Customer</li>
             </ul>
           </div>
         </form>
