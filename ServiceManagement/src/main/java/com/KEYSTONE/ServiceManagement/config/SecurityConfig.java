@@ -33,8 +33,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
 
-    @Value("${app.cors.allowed-origins}")
-    private String allowedOrigins;
+    @Value("${app.cors.allowed-origins:https://keystone-service-management-61n2w6ysc-sujal-s-projects1.vercel.app,https://keystone-service-management-esda-rho.vercel.app}")
+private String allowedOrigins;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
