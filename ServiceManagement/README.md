@@ -38,7 +38,7 @@ docker compose -f docker-compose.prod.yml up --build -d
 ```
 
 - Frontend: https://keystone-service-management.vercel.app/login
-- Backend API: [http://localhost:8080](https://keystone-servicemanagement-production.up.railway.app) (Swagger UI at `/swagger-ui.html`)
+- Backend API: https://keystone-servicemanagement-production.up.railway.app (Swagger UI at `/swagger-ui.html`)
 - MySQL: localhost:3306 (`keystone` / `keystone_user` / `keystone_pass`)
 
 Flyway creates the schema and loads demo seed data automatically on first backend boot. Give
