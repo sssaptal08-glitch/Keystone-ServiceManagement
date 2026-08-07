@@ -86,8 +86,8 @@ export default function Login() {
             <ul>
               <li>manager@keystone.example — Manager</li>
               <li>dispatcher@keystone.example — Dispatcher</li>
-              <li>tech1@keystone.example — Technician</li>
-              <li>customer@keystone.example — Customer</li>
+              <li>tom.tech@keystone.example — Technician</li>
+              <li>carla@acme-mfg.example — Customer</li>
             </ul>
           </div>
         </form>
