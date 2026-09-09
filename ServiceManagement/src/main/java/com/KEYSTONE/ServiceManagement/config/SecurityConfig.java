@@ -2,25 +2,26 @@ package com.KEYSTONE.ServiceManagement.config;
 
 import com.KEYSTONE.ServiceManagement.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
@@ -33,73 +34,203 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
 
-    @Value("${app.cors.allowed-origins:https://keystone-service-management-61n2w6ysc-sujal-s-projects1.vercel.app,https://keystone-service-management-esda-rho.vercel.app}")
-private String allowedOrigins;
+    // =========================================================
+    // PASSWORD ENCODER
+    // =========================================================
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // =========================================================
+    // AUTHENTICATION PROVIDER
+    // =========================================================
+
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+
+        DaoAuthenticationProvider provider =
+                new DaoAuthenticationProvider();
+
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
+
         return provider;
     }
 
+    // =========================================================
+    // AUTHENTICATION MANAGER
+    // =========================================================
+
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config) throws Exception {
+
         return config.getAuthenticationManager();
     }
 
-    @Bean
-public CorsConfigurationSource corsConfigurationSource() {
-
-    CorsConfiguration configuration = new CorsConfiguration();
-
-    configuration.setAllowedOriginPatterns(List.of(
-            "https://*.vercel.app"
-    ));
-
-    configuration.setAllowedMethods(List.of(
-            "GET",
-            "POST",
-            "PUT",
-            "PATCH",
-            "DELETE",
-            "OPTIONS"
-    ));
-
-    configuration.setAllowedHeaders(List.of("*"));
-    configuration.setAllowCredentials(true);
-
-    UrlBasedCorsConfigurationSource source =
-            new UrlBasedCorsConfigurationSource();
-
-    source.registerCorsConfiguration("/**", configuration);
-
-    return source;
-}
+    // =========================================================
+    // CORS CONFIGURATION
+    // =========================================================
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public CorsConfigurationSource corsConfigurationSource() {
+
+        CorsConfiguration configuration =
+                new CorsConfiguration();
+
+        /*
+         * Your deployed Vercel frontend
+         */
+        configuration.setAllowedOrigins(List.of(
+                "https://keystone-service-management.vercel.app"
+        ));
+
+        /*
+         * Allow HTTP methods
+         */
+        configuration.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"
+        ));
+
+        /*
+         * Allow headers used by Axios / JWT authentication
+         */
+        configuration.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "Origin",
+                "X-Requested-With"
+        ));
+
+        /*
+         * Headers that frontend is allowed to read
+         */
+        configuration.setExposedHeaders(List.of(
+                "Authorization"
+        ));
+
+        /*
+         * Required if cookies / credentials are used.
+         */
+        configuration.setAllowCredentials(true);
+
+        /*
+         * Apply CORS configuration to every endpoint.
+         */
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
+
+        return source;
+    }
+
+    // =========================================================
+    // SPRING SECURITY FILTER CHAIN
+    // =========================================================
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http) throws Exception {
+
         http
+
+                // -------------------------------------------------
+                // CSRF
+                // -------------------------------------------------
+
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // -------------------------------------------------
+                // CORS
+                // -------------------------------------------------
+
+                .cors(cors ->
+                        cors.configurationSource(
+                                corsConfigurationSource()
+                        )
+                )
+
+                // -------------------------------------------------
+                // SESSION MANAGEMENT
+                // -------------------------------------------------
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
+
+                // -------------------------------------------------
+                // AUTHORIZATION
+                // -------------------------------------------------
+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/uploads/**").authenticated()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Login / Register / Auth endpoints
+                        .requestMatchers(
+                                "/api/auth/**"
+                        ).permitAll()
+
+                        // WebSocket
+                        .requestMatchers(
+                                "/ws/**"
+                        ).permitAll()
+
+                        // Swagger
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+
+                        // Actuator health
+                        .requestMatchers(
+                                "/actuator/health"
+                        ).permitAll()
+
+                        // File uploads
+                        .requestMatchers(
+                                "/uploads/**"
+                        ).authenticated()
+
+                        // CORS preflight requests
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        ).permitAll()
+
+                        // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+                // -------------------------------------------------
+                // AUTHENTICATION PROVIDER
+                // -------------------------------------------------
+
+                .authenticationProvider(
+                        authenticationProvider()
+                )
+
+                // -------------------------------------------------
+                // JWT FILTER
+                // -------------------------------------------------
+
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
