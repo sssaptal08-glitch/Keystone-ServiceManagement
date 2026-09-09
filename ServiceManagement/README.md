@@ -1,4 +1,4 @@
-# Project KEYSTONE — Service Management Platform
+# Project KEYSTONE — ServiceManagement Platform
 
 A full-stack field service management application: work order lifecycle (create → assign →
 in progress → on hold → completed → closed), technician dispatch, parts/inventory tracking,
