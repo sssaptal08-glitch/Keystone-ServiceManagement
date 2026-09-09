@@ -75,66 +75,46 @@ public class SecurityConfig {
     // =========================================================
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration configuration =
-                new CorsConfiguration();
+    CorsConfiguration configuration = new CorsConfiguration();
 
-        /*
-         * Your deployed Vercel frontend
-         */
-        configuration.setAllowedOrigins(List.of(
-                "https://keystone-service-management.vercel.app"
-        ));
+    configuration.setAllowedOrigins(List.of(
+            "https://keystone-service-management.vercel.app",
+            "https://keystone-service-management-61n2w6ysc-sujal-s-projects1.vercel.app",
+            "https://keystone-service-management-esda-rho.vercel.app"
+    ));
 
-        /*
-         * Allow HTTP methods
-         */
-        configuration.setAllowedMethods(List.of(
-                "GET",
-                "POST",
-                "PUT",
-                "PATCH",
-                "DELETE",
-                "OPTIONS"
-        ));
+    configuration.setAllowedMethods(List.of(
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+            "OPTIONS"
+    ));
 
-        /*
-         * Allow headers used by Axios / JWT authentication
-         */
-        configuration.setAllowedHeaders(List.of(
-                "Authorization",
-                "Content-Type",
-                "Accept",
-                "Origin",
-                "X-Requested-With"
-        ));
+    configuration.setAllowedHeaders(List.of(
+            "Authorization",
+            "Content-Type",
+            "Accept",
+            "Origin",
+            "X-Requested-With"
+    ));
 
-        /*
-         * Headers that frontend is allowed to read
-         */
-        configuration.setExposedHeaders(List.of(
-                "Authorization"
-        ));
+    configuration.setExposedHeaders(List.of(
+            "Authorization"
+    ));
 
-        /*
-         * Required if cookies / credentials are used.
-         */
-        configuration.setAllowCredentials(true);
+    configuration.setAllowCredentials(true);
 
-        /*
-         * Apply CORS configuration to every endpoint.
-         */
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+    UrlBasedCorsConfigurationSource source =
+            new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration(
-                "/**",
-                configuration
-        );
+    source.registerCorsConfiguration("/**", configuration);
 
-        return source;
-    }
+    return source;
+}
 
     // =========================================================
     // SPRING SECURITY FILTER CHAIN
