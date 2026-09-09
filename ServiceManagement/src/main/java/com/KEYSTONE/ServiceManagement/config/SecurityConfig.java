@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import org.springframework.http.HttpMethod;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -13,15 +15,19 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+
 import org.springframework.security.core.userdetails.UserDetailsService;
+
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import java.util.List;
 
@@ -34,6 +40,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
 
+
     // =========================================================
     // PASSWORD ENCODER
     // =========================================================
@@ -42,6 +49,7 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
 
     // =========================================================
     // AUTHENTICATION PROVIDER
@@ -59,6 +67,7 @@ public class SecurityConfig {
         return provider;
     }
 
+
     // =========================================================
     // AUTHENTICATION MANAGER
     // =========================================================
@@ -70,54 +79,89 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+
     // =========================================================
     // CORS CONFIGURATION
     // =========================================================
 
     @Bean
-public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource() {
 
-    CorsConfiguration configuration = new CorsConfiguration();
+        CorsConfiguration configuration =
+                new CorsConfiguration();
 
-    configuration.setAllowedOrigins(List.of(
-            "https://keystone-service-management.vercel.app",
-            "https://keystone-service-management-61n2w6ysc-sujal-s-projects1.vercel.app",
-            "https://keystone-service-management-esda-rho.vercel.app"
-    ));
+        /*
+         * ALL VERCEL FRONTENDS THAT YOU ARE USING
+         */
+        configuration.setAllowedOrigins(List.of(
+                "https://keystone-service-management.vercel.app",
+                "https://keystone-service-management-61n2w6ysc-sujal-s-projects1.vercel.app",
+                "https://keystone-service-management-esda-rho.vercel.app"
+        ));
 
-    configuration.setAllowedMethods(List.of(
-            "GET",
-            "POST",
-            "PUT",
-            "PATCH",
-            "DELETE",
-            "OPTIONS"
-    ));
+        /*
+         * HTTP METHODS
+         */
+        configuration.setAllowedMethods(List.of(
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS"
+        ));
 
-    configuration.setAllowedHeaders(List.of(
-            "Authorization",
-            "Content-Type",
-            "Accept",
-            "Origin",
-            "X-Requested-With"
-    ));
+        /*
+         * REQUEST HEADERS
+         */
+        configuration.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "Origin",
+                "X-Requested-With"
+        ));
 
-    configuration.setExposedHeaders(List.of(
-            "Authorization"
-    ));
+        /*
+         * RESPONSE HEADERS
+         */
+        configuration.setExposedHeaders(List.of(
+                "Authorization"
+        ));
 
-    configuration.setAllowCredentials(true);
+        /*
+         * Credentials
+         */
+        configuration.setAllowCredentials(true);
 
-    UrlBasedCorsConfigurationSource source =
-            new UrlBasedCorsConfigurationSource();
+        /*
+         * Register configuration for ALL endpoints
+         */
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
 
-    source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
 
-    return source;
-}
+        return source;
+    }
+
 
     // =========================================================
-    // SPRING SECURITY FILTER CHAIN
+    // EXPLICIT CORS FILTER
+    // =========================================================
+
+    @Bean
+    public CorsFilter corsFilter() {
+
+        return new CorsFilter(corsConfigurationSource());
+    }
+
+
+    // =========================================================
+    // SPRING SECURITY
     // =========================================================
 
     @Bean
@@ -132,6 +176,7 @@ public CorsConfigurationSource corsConfigurationSource() {
 
                 .csrf(csrf -> csrf.disable())
 
+
                 // -------------------------------------------------
                 // CORS
                 // -------------------------------------------------
@@ -142,8 +187,9 @@ public CorsConfigurationSource corsConfigurationSource() {
                         )
                 )
 
+
                 // -------------------------------------------------
-                // SESSION MANAGEMENT
+                // SESSION
                 // -------------------------------------------------
 
                 .sessionManagement(session ->
@@ -152,13 +198,14 @@ public CorsConfigurationSource corsConfigurationSource() {
                         )
                 )
 
+
                 // -------------------------------------------------
                 // AUTHORIZATION
                 // -------------------------------------------------
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // Login / Register / Auth endpoints
+                        // Login / Register
                         .requestMatchers(
                                 "/api/auth/**"
                         ).permitAll()
@@ -175,25 +222,26 @@ public CorsConfigurationSource corsConfigurationSource() {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // Actuator health
+                        // Health check
                         .requestMatchers(
                                 "/actuator/health"
                         ).permitAll()
 
-                        // File uploads
+                        // Uploads
                         .requestMatchers(
                                 "/uploads/**"
                         ).authenticated()
 
-                        // CORS preflight requests
+                        // CORS preflight
                         .requestMatchers(
                                 HttpMethod.OPTIONS,
                                 "/**"
                         ).permitAll()
 
-                        // Everything else requires authentication
+                        // Everything else
                         .anyRequest().authenticated()
                 )
+
 
                 // -------------------------------------------------
                 // AUTHENTICATION PROVIDER
@@ -202,6 +250,7 @@ public CorsConfigurationSource corsConfigurationSource() {
                 .authenticationProvider(
                         authenticationProvider()
                 )
+
 
                 // -------------------------------------------------
                 // JWT FILTER
