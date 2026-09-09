@@ -3,10 +3,8 @@ package com.KEYSTONE.ServiceManagement.config;
 import com.KEYSTONE.ServiceManagement.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import org.springframework.http.HttpMethod;
 
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,7 +16,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 
 import org.springframework.security.core.userdetails.UserDetailsService;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -28,7 +25,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import java.util.List;
 
@@ -86,7 +82,10 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Your Vercel frontend URLs
+        // ---------------------------------------------------------
+        // ALLOWED ORIGINS
+        // ---------------------------------------------------------
+
         configuration.setAllowedOrigins(List.of(
                 "https://keystone-service-management.vercel.app",
                 "https://keystone-service-management-61n2w6ysc-sujal-s-projects1.vercel.app",
@@ -99,7 +98,10 @@ public class SecurityConfig {
                 "http://localhost:3000"
         ));
 
-        // HTTP methods
+        // ---------------------------------------------------------
+        // ALLOWED METHODS
+        // ---------------------------------------------------------
+
         configuration.setAllowedMethods(List.of(
                 "GET",
                 "POST",
@@ -109,50 +111,45 @@ public class SecurityConfig {
                 "OPTIONS"
         ));
 
-        // Allow all request headers
-        configuration.setAllowedHeaders(List.of("*"));
+        // ---------------------------------------------------------
+        // ALLOWED HEADERS
+        // ---------------------------------------------------------
 
-        // Headers frontend is allowed to read
+        configuration.setAllowedHeaders(List.of(
+                "*"
+        ));
+
+        // ---------------------------------------------------------
+        // EXPOSED HEADERS
+        // ---------------------------------------------------------
+
         configuration.setExposedHeaders(List.of(
                 "Authorization"
         ));
 
-        // Required if frontend uses credentials/cookies
+        // ---------------------------------------------------------
+        // CREDENTIALS
+        // ---------------------------------------------------------
+
         configuration.setAllowCredentials(true);
+
+        // ---------------------------------------------------------
+        // REGISTER CORS CONFIGURATION
+        // ---------------------------------------------------------
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
 
         return source;
     }
 
     // =========================================================
-    // CORS FILTER - RUN BEFORE SPRING SECURITY
-    // =========================================================
-
-    @Bean
-    public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
-
-        FilterRegistrationBean<CorsFilter> registrationBean =
-                new FilterRegistrationBean<>();
-
-        registrationBean.setFilter(
-                new CorsFilter(corsConfigurationSource())
-        );
-
-        registrationBean.addUrlPatterns("/*");
-
-        // VERY IMPORTANT:
-        // CORS must execute before Spring Security
-        registrationBean.setOrder(Integer.MIN_VALUE);
-
-        return registrationBean;
-    }
-
-    // =========================================================
-    // SPRING SECURITY
+    // SECURITY FILTER CHAIN
     // =========================================================
 
     @Bean
@@ -166,6 +163,16 @@ public class SecurityConfig {
                 // -------------------------------------------------
 
                 .csrf(csrf -> csrf.disable())
+
+                // -------------------------------------------------
+                // CORS
+                // -------------------------------------------------
+
+                .cors(cors ->
+                        cors.configurationSource(
+                                corsConfigurationSource()
+                        )
+                )
 
                 // -------------------------------------------------
                 // SESSION
@@ -183,40 +190,61 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // Login / Register
+                        // =========================================
+                        // LOGIN / REGISTER
+                        // =========================================
+
                         .requestMatchers(
                                 "/api/auth/**"
                         ).permitAll()
 
-                        // WebSocket
+                        // =========================================
+                        // CORS PREFLIGHT
+                        // =========================================
+
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        ).permitAll()
+
+                        // =========================================
+                        // WEBSOCKET
+                        // =========================================
+
                         .requestMatchers(
                                 "/ws/**"
                         ).permitAll()
 
-                        // Swagger
+                        // =========================================
+                        // SWAGGER
+                        // =========================================
+
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // Health
+                        // =========================================
+                        // ACTUATOR HEALTH
+                        // =========================================
+
                         .requestMatchers(
                                 "/actuator/health"
                         ).permitAll()
 
-                        // Uploads
+                        // =========================================
+                        // UPLOADS
+                        // =========================================
+
                         .requestMatchers(
                                 "/uploads/**"
                         ).authenticated()
 
-                        // CORS preflight
-                        .requestMatchers(
-                                HttpMethod.OPTIONS,
-                                "/**"
-                        ).permitAll()
+                        // =========================================
+                        // EVERYTHING ELSE
+                        // =========================================
 
-                        // Everything else
                         .anyRequest().authenticated()
                 )
 
