@@ -4,13 +4,19 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.lang.NonNull;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+
 import org.springframework.stereotype.Component;
+
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -22,12 +28,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsService;
 
-    @Override
-    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+    // =========================================================
+    // SKIP CORS PREFLIGHT REQUESTS
+    // =========================================================
 
-        // Never process CORS preflight requests with JWT authentication
-        return "OPTIONS".equalsIgnoreCase(request.getMethod());
+    @Override
+    protected boolean shouldNotFilter(
+            @NonNull HttpServletRequest request) {
+
+        return "OPTIONS".equalsIgnoreCase(
+                request.getMethod()
+        );
     }
+
+    // =========================================================
+    // JWT FILTER
+    // =========================================================
 
     @Override
     protected void doFilterInternal(
@@ -36,28 +52,63 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String authHeader = request.getHeader("Authorization");
+        // -------------------------------------------------------
+        // GET AUTHORIZATION HEADER
+        // -------------------------------------------------------
 
-        // No JWT → continue as unauthenticated
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        final String authHeader =
+                request.getHeader("Authorization");
+
+        // -------------------------------------------------------
+        // NO JWT
+        // -------------------------------------------------------
+
+        if (authHeader == null ||
+                !authHeader.startsWith("Bearer ")) {
+
             filterChain.doFilter(request, response);
             return;
         }
 
-        final String jwt = authHeader.substring(7);
+        // -------------------------------------------------------
+        // EXTRACT JWT
+        // -------------------------------------------------------
+
+        final String jwt =
+                authHeader.substring(7);
 
         try {
-            final String username = jwtService.extractUsername(jwt);
 
-            if (username != null
-                    && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // ---------------------------------------------------
+            // EXTRACT USERNAME
+            // ---------------------------------------------------
+
+            final String username =
+                    jwtService.extractUsername(jwt);
+
+            // ---------------------------------------------------
+            // AUTHENTICATE USER
+            // ---------------------------------------------------
+
+            if (username != null &&
+                    SecurityContextHolder
+                            .getContext()
+                            .getAuthentication() == null) {
 
                 UserDetails userDetails =
-                        userDetailsService.loadUserByUsername(username);
+                        userDetailsService
+                                .loadUserByUsername(username);
 
-                if (jwtService.isTokenValid(jwt, userDetails.getUsername())) {
+                // ------------------------------------------------
+                // VALIDATE TOKEN
+                // ------------------------------------------------
 
-                    UsernamePasswordAuthenticationToken authToken =
+                if (jwtService.isTokenValid(
+                        jwt,
+                        userDetails.getUsername())) {
+
+                    UsernamePasswordAuthenticationToken
+                            authToken =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails,
                                     null,
@@ -69,16 +120,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     .buildDetails(request)
                     );
 
-                    SecurityContextHolder.getContext()
+                    SecurityContextHolder
+                            .getContext()
                             .setAuthentication(authToken);
                 }
             }
 
         } catch (Exception ex) {
 
-            // Invalid or expired JWT
+            // ---------------------------------------------------
+            // INVALID / EXPIRED TOKEN
+            // ---------------------------------------------------
+
             SecurityContextHolder.clearContext();
         }
+
+        // -------------------------------------------------------
+        // CONTINUE REQUEST
+        // -------------------------------------------------------
 
         filterChain.doFilter(request, response);
     }
