@@ -3,6 +3,7 @@ package com.KEYSTONE.ServiceManagement.config;
 import com.KEYSTONE.ServiceManagement.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -40,7 +41,6 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
 
-
     // =========================================================
     // PASSWORD ENCODER
     // =========================================================
@@ -49,7 +49,6 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 
     // =========================================================
     // AUTHENTICATION PROVIDER
@@ -67,7 +66,6 @@ public class SecurityConfig {
         return provider;
     }
 
-
     // =========================================================
     // AUTHENTICATION MANAGER
     // =========================================================
@@ -79,7 +77,6 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-
     // =========================================================
     // CORS CONFIGURATION
     // =========================================================
@@ -87,21 +84,22 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration configuration =
-                new CorsConfiguration();
+        CorsConfiguration configuration = new CorsConfiguration();
 
-        /*
-         * ALL VERCEL FRONTENDS THAT YOU ARE USING
-         */
+        // Your Vercel frontend URLs
         configuration.setAllowedOrigins(List.of(
                 "https://keystone-service-management.vercel.app",
                 "https://keystone-service-management-61n2w6ysc-sujal-s-projects1.vercel.app",
-                "https://keystone-service-management-esda-rho.vercel.app"
+                "https://keystone-service-management-esda-rho.vercel.app",
+
+                // Local development
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:5175",
+                "http://localhost:3000"
         ));
 
-        /*
-         * HTTP METHODS
-         */
+        // HTTP methods
         configuration.setAllowedMethods(List.of(
                 "GET",
                 "POST",
@@ -111,54 +109,47 @@ public class SecurityConfig {
                 "OPTIONS"
         ));
 
-        /*
-         * REQUEST HEADERS
-         */
-        configuration.setAllowedHeaders(List.of(
-                "Authorization",
-                "Content-Type",
-                "Accept",
-                "Origin",
-                "X-Requested-With"
-        ));
+        // Allow all request headers
+        configuration.setAllowedHeaders(List.of("*"));
 
-        /*
-         * RESPONSE HEADERS
-         */
+        // Headers frontend is allowed to read
         configuration.setExposedHeaders(List.of(
                 "Authorization"
         ));
 
-        /*
-         * Credentials
-         */
+        // Required if frontend uses credentials/cookies
         configuration.setAllowCredentials(true);
 
-        /*
-         * Register configuration for ALL endpoints
-         */
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration(
-                "/**",
-                configuration
-        );
+        source.registerCorsConfiguration("/**", configuration);
 
         return source;
     }
 
-
     // =========================================================
-    // EXPLICIT CORS FILTER
+    // CORS FILTER - RUN BEFORE SPRING SECURITY
     // =========================================================
 
     @Bean
-    public CorsFilter corsFilter() {
+    public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
 
-        return new CorsFilter(corsConfigurationSource());
+        FilterRegistrationBean<CorsFilter> registrationBean =
+                new FilterRegistrationBean<>();
+
+        registrationBean.setFilter(
+                new CorsFilter(corsConfigurationSource())
+        );
+
+        registrationBean.addUrlPatterns("/*");
+
+        // VERY IMPORTANT:
+        // CORS must execute before Spring Security
+        registrationBean.setOrder(Integer.MIN_VALUE);
+
+        return registrationBean;
     }
-
 
     // =========================================================
     // SPRING SECURITY
@@ -176,18 +167,6 @@ public class SecurityConfig {
 
                 .csrf(csrf -> csrf.disable())
 
-
-                // -------------------------------------------------
-                // CORS
-                // -------------------------------------------------
-
-                .cors(cors ->
-                        cors.configurationSource(
-                                corsConfigurationSource()
-                        )
-                )
-
-
                 // -------------------------------------------------
                 // SESSION
                 // -------------------------------------------------
@@ -197,7 +176,6 @@ public class SecurityConfig {
                                 SessionCreationPolicy.STATELESS
                         )
                 )
-
 
                 // -------------------------------------------------
                 // AUTHORIZATION
@@ -222,7 +200,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
 
-                        // Health check
+                        // Health
                         .requestMatchers(
                                 "/actuator/health"
                         ).permitAll()
@@ -242,7 +220,6 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-
                 // -------------------------------------------------
                 // AUTHENTICATION PROVIDER
                 // -------------------------------------------------
@@ -250,7 +227,6 @@ public class SecurityConfig {
                 .authenticationProvider(
                         authenticationProvider()
                 )
-
 
                 // -------------------------------------------------
                 // JWT FILTER
