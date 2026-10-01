@@ -195,7 +195,8 @@ public class SecurityConfig {
                         // =========================================
 
                         .requestMatchers(
-                                "/api/auth/**"
+                                "/api/auth/**",
+                                "/auth/**"
                         ).permitAll()
 
                         // =========================================
